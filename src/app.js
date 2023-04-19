@@ -19,12 +19,18 @@ try {
 }
 const db = mongoClient.db();
 
+//SCHEMAS
 const signupSchema = Joi.object({
   name: Joi.string().min(3).required(),
   email: Joi.string().email().required(),
   password: Joi.string().required(),
   repeat_password: Joi.ref("password"),
 }).with("password", "repeat_password");
+
+const signinSchema = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().required(),
+});
 
 //CADASTRO
 app.post("/sign-up", async (req, res) => {
@@ -38,10 +44,33 @@ app.post("/sign-up", async (req, res) => {
   const hash = bcrypt.hashSync(password, 10);
 
   try {
-    const emailInUse = await db.collection("users").findOne({ email });
-    if (emailInUse) return res.status(409).send("Email already in use");
+    const emailInDB = await db.collection("users").findOne({ email });
+    if (emailInDB) return res.status(409).send("Email already in use");
     await db.collection("users").insertOne({ name, email, password: hash });
     res.sendStatus(201);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
+//LOGIN
+app.post("/sign-in", async (req, res) => {
+  const validation = signinSchema.validate(req.body, { abortEarly: false });
+  if (validation.error)
+    return res
+      .status(422)
+      .send(validation.error.details.map((detail) => detail.message));
+  const { email, password } = req.body;
+
+  try {
+    const emailInDB = await db.collection("users").findOne({ email });
+    if (!emailInDB) return res.status(404).send("Email is not registered");
+    const passwordMatch = bcrypt.compareSync(password, emailInDB.password);
+    if (emailInDB && passwordMatch) {
+      res.sendStatus(200);
+    } else {
+      res.sendStatus(401);
+    }
   } catch (error) {
     res.status(500).send(error.message);
   }
