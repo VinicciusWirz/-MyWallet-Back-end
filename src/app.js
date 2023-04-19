@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import express from "express";
 import Joi from "joi";
 import { MongoClient } from "mongodb";
+import { v4 as uuid } from "uuid";
 
 const app = express();
 app.use(express.json());
@@ -30,6 +31,12 @@ const signupSchema = Joi.object({
 const signinSchema = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().required(),
+});
+
+const transactionsSchema = Joi.object({
+  description: Joi.string().required(),
+  value: Joi.number().required(),
+  type: Joi.string().valid("withdraw", "deposit").required(),
 });
 
 //CADASTRO
@@ -67,9 +74,66 @@ app.post("/sign-in", async (req, res) => {
     if (!emailInDB) return res.status(404).send("Email is not registered");
     const passwordMatch = bcrypt.compareSync(password, emailInDB.password);
     if (emailInDB && passwordMatch) {
-      res.sendStatus(200);
+      const token = uuid();
+      await db
+        .collection("sessions")
+        .insertOne({ userID: emailInDB._id, token });
+      res.status(200).send(token);
     } else {
       res.sendStatus(401);
+    }
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
+//TRANSACTIONS
+app.post("/transactions", async (req, res) => {
+  const { authorization } = req.headers;
+  const { description, value, type } = req.body;
+  if (!authorization) return res.sendStatus(401);
+  const token = authorization.replace("Bearer ", "");
+
+  const validation = transactionsSchema.validate(req.body, {
+    abortEarly: false,
+  });
+  if (validation.error)
+    return res
+      .status(422)
+      .send(validation.error.details.map((detail) => detail.message));
+
+  try {
+    const session = await db.collection("sessions").findOne({ token });
+    if (!session) return res.sendStatus(401);
+
+    const user = await db.collection("users").findOne({ _id: session.userID });
+    if (!user) return res.sendStatus(401);
+
+    const userTransactions = await db
+      .collection("transactions")
+      .findOne({ userID: session.userID });
+    if (userTransactions) {
+      const transactionsArray = [
+        ...userTransactions.transactions,
+        {
+          description,
+          value,
+          type,
+        },
+      ];
+      await db
+        .collection("transactions")
+        .updateOne(
+          { userID: session.userID },
+          { $set: { transactions: transactionsArray } }
+        );
+      res.sendStatus(200);
+    } else {
+      await db.collection("transactions").insertOne({
+        userID: session.userID,
+        transactions: [{ description, value, type }],
+      });
+      res.sendStatus(200);
     }
   } catch (error) {
     res.status(500).send(error.message);
