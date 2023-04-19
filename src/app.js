@@ -79,7 +79,7 @@ app.post("/sign-in", async (req, res) => {
       await db
         .collection("sessions")
         .insertOne({ userID: emailInDB._id, token });
-      res.status(200).send(token);
+      res.status(200).send({token});
     } else {
       res.sendStatus(401);
     }
