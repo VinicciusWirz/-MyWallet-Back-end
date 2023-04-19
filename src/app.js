@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import cors from "cors";
+import dayjs from "dayjs";
 import dotenv from "dotenv";
 import express from "express";
 import Joi from "joi";
@@ -103,6 +104,8 @@ app.post("/transactions", async (req, res) => {
       .send(validation.error.details.map((detail) => detail.message));
 
   try {
+    const date = dayjs().format("DD/MM/YYYY");
+    const time = dayjs().format("HH:mm");
     const session = await db.collection("sessions").findOne({ token });
     if (!session) return res.sendStatus(401);
 
@@ -119,6 +122,8 @@ app.post("/transactions", async (req, res) => {
           description,
           value,
           type,
+          date,
+          time,
         },
       ];
       await db
@@ -131,9 +136,32 @@ app.post("/transactions", async (req, res) => {
     } else {
       await db.collection("transactions").insertOne({
         userID: session.userID,
-        transactions: [{ description, value, type }],
+        transactions: [{ description, value, type, date, time }],
       });
       res.sendStatus(200);
+    }
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
+app.get("/transactions", async (req, res) => {
+  const { authorization } = req.headers;
+  if (!authorization) return res.sendStatus(401);
+  const token = authorization.replace("Bearer ", "");
+
+  try {
+    const session = await db.collection("sessions").findOne({ token });
+    if (!session) return res.sendStatus(401);
+    const user = await db.collection("users").findOne({ _id: session.userID });
+    if (!user) return res.sendStatus(401);
+    const userTransactions = await db
+      .collection("transactions")
+      .findOne({ userID: session.userID });
+    if (userTransactions) {
+      res.status(200).send({ transactions: userTransactions.transactions });
+    } else {
+      res.status(200).send({ transactions: [] });
     }
   } catch (error) {
     res.status(500).send(error.message);
