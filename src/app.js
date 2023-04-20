@@ -4,6 +4,7 @@ import express from "express";
 import { MongoClient } from "mongodb";
 import { signin, signup } from "./controllers/usersControllers.js";
 import {
+  deleteTransaction,
   getTransactions,
   newTransaction,
 } from "./controllers/transactionsControllers.js";
@@ -32,6 +33,8 @@ app.post("/sign-in", signin);
 app.post("/transactions", newTransaction);
 
 app.get("/transactions", getTransactions);
+
+app.delete("/transactions/:id", deleteTransaction);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Servidor iniciado na porta ${PORT}`));

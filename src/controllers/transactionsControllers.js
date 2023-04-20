@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
 import Joi from "joi";
+import { ObjectId } from "mongodb";
 import { db } from "../app.js";
 
 const transactionsSchema = Joi.object({
@@ -7,7 +8,6 @@ const transactionsSchema = Joi.object({
   value: Joi.number().required(),
   type: Joi.string().valid("withdraw", "deposit").required(),
 });
-
 
 export async function newTransaction(req, res) {
   const { authorization } = req.headers;
@@ -39,6 +39,7 @@ export async function newTransaction(req, res) {
       const transactionsArray = [
         ...userTransactions.transactions,
         {
+          id: new ObjectId(),
           description,
           value,
           type,
@@ -83,6 +84,33 @@ export async function getTransactions(req, res) {
     } else {
       res.status(200).send({ transactions: [] });
     }
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+}
+
+export async function deleteTransaction(req, res) {
+  const transactionID = new ObjectId(req.params.id);
+  const { authorization } = req.headers;
+  if (!authorization) return res.sendStatus(401);
+  const token = authorization.replace("Bearer ", "");
+
+  try {
+    const session = await db.collection("sessions").findOne({ token });
+    if (!session) return res.sendStatus(401);
+    const user = await db.collection("users").findOne({ _id: session.userID });
+    if (!user) return res.sendStatus(401);
+    const filter = { userID: session.userID };
+    const query = { $pull: { transactions: { id: transactionID } } };
+
+    const updateTransactions = await db
+      .collection("transactions")
+      .updateOne(filter, query);
+
+    if (updateTransactions.modifiedCount === 0)
+      return res.status(404).send("Could Not Find");
+
+    res.status(200).send("Transaction deleted successfully");
   } catch (error) {
     res.status(500).send(error.message);
   }
