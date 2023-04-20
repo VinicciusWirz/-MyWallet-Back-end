@@ -57,7 +57,9 @@ export async function newTransaction(req, res) {
     } else {
       await db.collection("transactions").insertOne({
         userID: session.userID,
-        transactions: [{ description, value, type, date, time }],
+        transactions: [
+          { id: new ObjectId(), description, value, type, date, time },
+        ],
       });
       res.sendStatus(200);
     }
