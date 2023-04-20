@@ -92,26 +92,28 @@ export async function getTransactions(req, res) {
 export async function deleteTransaction(req, res) {
   const transactionID = new ObjectId(req.params.id);
   const { authorization } = req.headers;
-  if (!authorization) return res.sendStatus(401);
-  const token = authorization.replace("Bearer ", "");
+  if (!authorization) return res.status(401).send("Missing authorization");
+  const token = authorization?.replace("Bearer ", "");
 
   try {
     const session = await db.collection("sessions").findOne({ token });
-    if (!session) return res.sendStatus(401);
+    if (!session) return res.status(401).send("Invalid Token");
+
     const user = await db.collection("users").findOne({ _id: session.userID });
-    if (!user) return res.sendStatus(401);
+    if (!user) return res.status(401).send("Cannot find user");
+
     const filter = { userID: session.userID };
     const query = { $pull: { transactions: { id: transactionID } } };
-
     const updateTransactions = await db
       .collection("transactions")
       .updateOne(filter, query);
 
-    if (updateTransactions.modifiedCount === 0)
-      return res.status(404).send("Could Not Find");
-
+    if (updateTransactions.modifiedCount === 0) {
+      return res.status(404).send("Could not find transaction");
+    }
     res.status(200).send("Transaction deleted successfully");
   } catch (error) {
+    console.error("Unable to connect with DB:", error);
     res.status(500).send(error.message);
   }
 }
