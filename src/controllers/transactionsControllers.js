@@ -92,6 +92,7 @@ export async function getTransactions(req, res) {
 }
 
 export async function deleteTransaction(req, res) {
+  if (!req.params.id) return res.status(401).send("Missing id");
   const transactionID = new ObjectId(req.params.id);
   const { authorization } = req.headers;
   if (!authorization) return res.status(401).send("Missing authorization");
