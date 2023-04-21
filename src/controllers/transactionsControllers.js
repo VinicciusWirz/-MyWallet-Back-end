@@ -64,8 +64,7 @@ export async function getTransactions(req, res) {
 }
 
 export async function deleteTransaction(req, res) {
-  if (!req.params.id) return res.status(401).send("Missing id");
-  const transactionID = new ObjectId(req.params.id);
+  const transactionID = res.locals.transactionID;
 
   try {
     const session = res.locals.session;
@@ -82,6 +81,54 @@ export async function deleteTransaction(req, res) {
     res.status(200).send("Transaction deleted successfully");
   } catch (error) {
     console.error("Unable to connect with DB:", error);
+    res.status(500).send(error.message);
+  }
+}
+
+export async function getTransactionID(req, res) {
+  const transactionID = res.locals.transactionID;
+  try {
+    const session = res.locals.session;
+    const filter = { userID: session.userID };
+    const userTransactions = await db
+      .collection("transactions")
+      .findOne(filter);
+    const transactionOBJ = userTransactions.transactions.find((t) =>
+      t.id.equals(transactionID)
+    );
+    if (!transactionOBJ)
+      return res
+        .status(401)
+        .send("Could not find this transaction for this user");
+
+    res.status(200).send(transactionOBJ);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+}
+
+export async function changeTransaction(req, res) {
+  const transactionID = res.locals.transactionID;
+  const { description, value } = req.body;
+  try {
+    const session = res.locals.session;
+    const filter = { userID: session.userID, "transactions.id": transactionID };
+    const update = {
+      $set: {
+        "transactions.$.description": description,
+        "transactions.$.value": value,
+      },
+    };
+    const updatedTransaction = await db
+      .collection("transactions")
+      .updateOne(filter, update);
+    if (updatedTransaction.matchedCount === 0) return res.sendStatus(404);
+    let okMessage = "OK";
+    if (updatedTransaction.modifiedCount === 0) {
+      okMessage = "No data has changed";
+    }
+    res.status(200).send(okMessage);
+  } catch (error) {
     res.status(500).send(error.message);
   }
 }
