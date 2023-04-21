@@ -1,26 +1,8 @@
 import bcrypt from "bcrypt";
-import { db } from "../app.js";
-import Joi from "joi";
+import { db } from "../database/databaseConnection.js";
 import { v4 as uuid } from "uuid";
 
-const signupSchema = Joi.object({
-  name: Joi.string().min(3).required(),
-  email: Joi.string().email().required(),
-  password: Joi.string().required(),
-  repeat_password: Joi.ref("password"),
-}).with("password", "repeat_password");
-
-const signinSchema = Joi.object({
-  email: Joi.string().email().required(),
-  password: Joi.string().required(),
-});
-
 export async function signin(req, res) {
-  const validation = signinSchema.validate(req.body, { abortEarly: false });
-  if (validation.error)
-    return res
-      .status(422)
-      .send(validation.error.details.map((detail) => detail.message));
   const { email, password } = req.body;
 
   try {
@@ -42,11 +24,6 @@ export async function signin(req, res) {
 }
 
 export async function signup(req, res) {
-  const validation = signupSchema.validate(req.body, { abortEarly: false });
-  if (validation.error)
-    return res
-      .status(422)
-      .send(validation.error.details.map((detail) => detail.message));
   const { name, email, password } = req.body;
 
   const hash = bcrypt.hashSync(password, 10);
