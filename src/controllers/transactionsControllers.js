@@ -1,9 +1,11 @@
 import dayjs from "dayjs";
 import { db } from "../database/databaseConnection.js";
 import { ObjectId } from "mongodb";
+import { stripHtml } from "string-strip-html";
 
 export async function newTransaction(req, res) {
   const { description, value, type } = req.body;
+  const sanitizeDscription = stripHtml(description).result.trim();
 
   try {
     const date = dayjs().format("DD/MM/YYYY");
@@ -18,7 +20,7 @@ export async function newTransaction(req, res) {
         ...userTransactions.transactions,
         {
           id: new ObjectId(),
-          description,
+          description: sanitizeDscription,
           value,
           type,
           date,
@@ -36,7 +38,14 @@ export async function newTransaction(req, res) {
       await db.collection("transactions").insertOne({
         userID: session.userID,
         transactions: [
-          { id: new ObjectId(), description, value, type, date, time },
+          {
+            id: new ObjectId(),
+            description: sanitizeDscription,
+            value,
+            type,
+            date,
+            time,
+          },
         ],
       });
       res.sendStatus(200);
@@ -110,12 +119,13 @@ export async function getTransactionID(req, res) {
 export async function changeTransaction(req, res) {
   const transactionID = res.locals.transactionID;
   const { description, value } = req.body;
+  const sanitizeDscription = stripHtml(description).result.trim();
   try {
     const session = res.locals.session;
     const filter = { userID: session.userID, "transactions.id": transactionID };
     const update = {
       $set: {
-        "transactions.$.description": description,
+        "transactions.$.description": sanitizeDscription,
         "transactions.$.value": value,
       },
     };
