@@ -4,12 +4,12 @@ import { ObjectId } from "mongodb";
 import { stripHtml } from "string-strip-html";
 
 export async function newTransaction(req, res) {
-  const { description, value, type } = req.body;
+  const { description, value, type, date } = req.body;
   const sanitizeDscription = stripHtml(description).result.trim();
+  let newDate = date;
+  if (!date) newDate = dayjs().format("DD/MM/YYYY");
 
   try {
-    const date = dayjs().format("DD/MM/YYYY");
-    const time = dayjs().format("HH:mm");
     const transactionID = new ObjectId();
     const session = res.locals.session;
     const newTransaction = {
@@ -17,8 +17,7 @@ export async function newTransaction(req, res) {
       description: sanitizeDscription,
       value,
       type,
-      date,
-      time,
+      date: newDate,
     };
     const filter = { userID: session.userID };
     const query = { $push: { transactions: newTransaction } };
