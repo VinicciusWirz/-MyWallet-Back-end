@@ -33,12 +33,9 @@ export async function signup(req, res) {
   try {
     const emailInDB = await db.collection("users").findOne({ email });
     if (emailInDB) return res.status(409).send("Email already in use");
-    const insertedUser = await db
+    await db
       .collection("users")
       .insertOne({ name: sanitizeName, email, password: hash });
-    await db
-      .collection("transactions")
-      .insertOne({ userID: insertedUser.insertedId, transactions: [] });
     res.sendStatus(201);
   } catch (error) {
     res.status(500).send(error.message);

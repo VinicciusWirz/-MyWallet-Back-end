@@ -12,7 +12,6 @@ export async function newTransaction(req, res) {
     const time = dayjs().format("HH:mm");
     const transactionID = new ObjectId();
     const session = res.locals.session;
-    const filter = { userID: session.userID };
     const newTransaction = {
       id: transactionID,
       description: sanitizeDscription,
@@ -21,10 +20,19 @@ export async function newTransaction(req, res) {
       date,
       time,
     };
-    const query = { $push: { transactions: newTransaction } };
+    const filter = { userID: session.userID };
+    const userHasCollection = await db
+      .collection("transactions")
+      .findOne(filter);
+    if (!userHasCollection) {
+      await db
+        .collection("transactions")
+        .insertOne({ ...filter, transactions: [newTransaction] });
+    } else {
+      const query = { $push: { transactions: newTransaction } };
+      await db.collection("transactions").updateOne(filter, query);
+    }
 
-    await db.collection("transactions").updateOne(filter, query);
-    
     res.sendStatus(200);
   } catch (error) {
     res.status(500).send(error.message);
@@ -65,7 +73,6 @@ export async function deleteTransaction(req, res) {
     }
     res.status(200).send("Transaction deleted successfully");
   } catch (error) {
-    console.error("Unable to connect with DB:", error);
     res.status(500).send(error.message);
   }
 }
