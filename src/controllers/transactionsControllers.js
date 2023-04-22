@@ -21,16 +21,17 @@ export async function newTransaction(req, res) {
       time,
     };
     const filter = { userID: session.userID };
-    const userHasCollection = await db
+    const query = { $push: { transactions: newTransaction } };
+
+    const transactionPushed = await db
       .collection("transactions")
-      .findOne(filter);
-    if (!userHasCollection) {
+      .updateOne(filter, query);
+
+    const isItFirstTransaction = transactionPushed.matchedCount === 0;
+    if (isItFirstTransaction) {
       await db
         .collection("transactions")
         .insertOne({ ...filter, transactions: [newTransaction] });
-    } else {
-      const query = { $push: { transactions: newTransaction } };
-      await db.collection("transactions").updateOne(filter, query);
     }
 
     res.sendStatus(200);
