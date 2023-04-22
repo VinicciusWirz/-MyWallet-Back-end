@@ -26,14 +26,19 @@ export async function signin(req, res) {
 
 export async function signup(req, res) {
   const { name, email, password } = req.body;
-  const sanitizeName = stripHtml(name).result.trim()
+  const sanitizeName = stripHtml(name).result.trim();
 
   const hash = bcrypt.hashSync(password, 10);
 
   try {
     const emailInDB = await db.collection("users").findOne({ email });
     if (emailInDB) return res.status(409).send("Email already in use");
-    await db.collection("users").insertOne({ name: sanitizeName, email, password: hash });
+    const insertedUser = await db
+      .collection("users")
+      .insertOne({ name: sanitizeName, email, password: hash });
+    await db
+      .collection("transactions")
+      .insertOne({ userID: insertedUser.insertedId, transactions: [] });
     res.sendStatus(201);
   } catch (error) {
     res.status(500).send(error.message);

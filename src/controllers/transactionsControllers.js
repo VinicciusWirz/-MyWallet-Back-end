@@ -10,46 +10,22 @@ export async function newTransaction(req, res) {
   try {
     const date = dayjs().format("DD/MM/YYYY");
     const time = dayjs().format("HH:mm");
+    const transactionID = new ObjectId();
     const session = res.locals.session;
+    const filter = { userID: session.userID };
+    const newTransaction = {
+      id: transactionID,
+      description: sanitizeDscription,
+      value,
+      type,
+      date,
+      time,
+    };
+    const query = { $push: { transactions: newTransaction } };
 
-    const userTransactions = await db
-      .collection("transactions")
-      .findOne({ userID: session.userID });
-    if (userTransactions) {
-      const transactionsArray = [
-        ...userTransactions.transactions,
-        {
-          id: new ObjectId(),
-          description: sanitizeDscription,
-          value,
-          type,
-          date,
-          time,
-        },
-      ];
-      await db
-        .collection("transactions")
-        .updateOne(
-          { userID: session.userID },
-          { $set: { transactions: transactionsArray } }
-        );
-      res.sendStatus(200);
-    } else {
-      await db.collection("transactions").insertOne({
-        userID: session.userID,
-        transactions: [
-          {
-            id: new ObjectId(),
-            description: sanitizeDscription,
-            value,
-            type,
-            date,
-            time,
-          },
-        ],
-      });
-      res.sendStatus(200);
-    }
+    await db.collection("transactions").updateOne(filter, query);
+    
+    res.sendStatus(200);
   } catch (error) {
     res.status(500).send(error.message);
   }
