@@ -7,7 +7,7 @@ export async function signin(req, res) {
   const passwordInput = req.body.password;
 
   try {
-    const { userID, name, password } = res.locals.userInfo;
+    const { _id: userID, name, password } = res.locals.userInfo;
     const passwordMatch = bcrypt.compareSync(passwordInput, password);
     if (passwordMatch) {
       const token = uuid();
