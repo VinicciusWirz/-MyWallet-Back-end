@@ -10,12 +10,14 @@ export async function newTransaction(req, res) {
   if (!date) newDate = dayjs().format("DD/MM/YYYY");
 
   try {
-    const transactionID = new ObjectId();
+    const aproximationValue = Number(value).toFixed(2);
+    const conversionToCents = 100;
     const session = res.locals.session;
+    const transactionID = new ObjectId();
     const newTransaction = {
       id: transactionID,
       description: sanitizeDscription,
-      value,
+      value: (Number(aproximationValue) * conversionToCents).toString(),
       type,
       date: newDate,
     };
@@ -104,12 +106,15 @@ export async function changeTransaction(req, res) {
   const { description, value } = req.body;
   const sanitizeDscription = stripHtml(description).result.trim();
   try {
+    const aproximationValue = Number(value).toFixed(2);
+    const conversionToCents = 100;
+    const valueInCents = (aproximationValue * conversionToCents).toString();
     const session = res.locals.session;
     const filter = { userID: session.userID, "transactions.id": transactionID };
     const update = {
       $set: {
         "transactions.$.description": sanitizeDscription,
-        "transactions.$.value": value,
+        "transactions.$.value": valueInCents,
       },
     };
     const updatedTransaction = await db
