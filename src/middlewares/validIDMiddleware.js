@@ -10,7 +10,7 @@ export async function validIDMiddleware(req, res, next) {
     const session = res.locals.session;
     const filter = { userID: session.userID, "transactions.id": transactionID };
     const validID = await db.collection("transactions").findOne(filter);
-    if (!validID) return res.status(404).send("Transaction does not exist");
+    if (!validID) return res.status(401).send("No such transaction for this user");
     next();
   } catch (error) {
     res.status(500).send(error.message);

@@ -7,9 +7,9 @@ export async function authValidation(req, res, next) {
 
   try {
     const session = await db.collection("sessions").findOne({ token });
-    if (!session) return res.status(401).send("Token Expired");
+    if (!session) return res.sendStatus(401);
     const user = await db.collection("users").findOne({ _id: session.userID });
-    if (!user) return res.status(401).send("User is not in database");
+    if (!user) return res.sendStatus(401);
 
     res.locals.session = session;
 
