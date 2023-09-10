@@ -187,6 +187,7 @@ MyWallet API is a robust backend solution designed to empower developers in crea
 <br/>
 
 With MyWallet API, developers can seamlessly integrate these functionalities into their applications, providing users with a powerful tool for managing their finances effectively.
+
 All sensitive data is encrypted.
 
 ## Technologies
