@@ -23,8 +23,8 @@ MyWallet API is a robust backend solution designed to empower developers in crea
   // body
   {
     name: "John Doe",
-    email: "email@email.com",
-    password: "1mApAsSwoRd!",
+    email: "email@email.com", //unique email
+    password: "1mApAsSwoRd!", //minimum of 3 characters
   }
   ```
 </details>
@@ -47,7 +47,7 @@ MyWallet API is a robust backend solution designed to empower developers in crea
   ```javascript
   // body
   {
-    email: "email@email.com",
+    email: "email@email.com", //registered email
     password: "1mApAsSwoRd!",
   }
   ```
@@ -173,7 +173,7 @@ MyWallet API is a robust backend solution designed to empower developers in crea
 <br/>
 
 - Removing entries
-<details disabled="true">
+<details>
   <summary>(DELETE "/transactions/:id") 🔒</summary>
   <ul>
     <li>
