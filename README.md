@@ -3,10 +3,10 @@ Handling personal finance management in applications requires a robust and relia
 <p align='center'>Checkout the frontend repository: https://github.com/VinicciusWirz/MyWallet</p>
 <p align='center'>Try out the frontend deploy: https://my-wallet-front-end-sigma.vercel.app/</p>
 
-### About
+## About
 MyWallet API is a robust backend solution designed to empower developers in creating efficient financial management applications. The API offers a comprehensive set of features.
 
-### Endpoints
+## Endpoints
 
 - User registration (Singup)
 <details>
@@ -189,7 +189,7 @@ MyWallet API is a robust backend solution designed to empower developers in crea
 With MyWallet API, developers can seamlessly integrate these functionalities into their applications, providing users with a powerful tool for managing their finances effectively.
 All sensitive data is encrypted.
 
-### Technologies
+## Technologies
 The following tools and frameworks were used in the construction of the project:
 
 <p>
@@ -201,7 +201,7 @@ The following tools and frameworks were used in the construction of the project:
   <img style='margin: 5px;' src='https://img.shields.io/badge/eslint-3A33D1?style=for-the-badge&logo=eslint&logoColor=white'/>
 </p>
 
-### How to use
+## How to use
 1. Clone this repository
 2. Install dependencies
 ```bash
